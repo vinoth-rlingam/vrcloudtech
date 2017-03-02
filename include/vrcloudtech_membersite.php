@@ -228,6 +228,7 @@ function Login()
     {
       echo "inside login";
         $username = trim($_POST['username']);
+		echo $username;
         $password = trim($_POST['login-pass']);
         
         if(!isset($_SESSION)){ session_start(); }
@@ -241,14 +242,12 @@ function Login()
         return true;
     }
 
- function GetLoginSessionVar()
+  function GetLoginSessionVar()
     {
-		$rand_key = '0iQx5oBk66oVZep';
-        $retvar = md5(rand_key);
+        $retvar = md5($this->rand_key);
         $retvar = 'usr_'.substr($retvar,0,10);
         return $retvar;
     }
-
 function CheckLogin()
     {
          if(!isset($_SESSION)){ session_start(); }
@@ -265,24 +264,29 @@ function CheckLogin()
 	function CheckLoginInDB($username,$password)
     {
 		echo "inside login db";
-        $this->connection = mysqli_connect($this->db_host,$this->username,$this->pwd,$this->database);      
+       $this->connection = mysqli_connect($this->db_host,$this->username,$this->pwd,$this->database);      
         $username = $this->SanitizeForSQL($username);
         $pwdmd5 = md5($password);
-        $qry = "Select name, email from $this->tablename where username='$username' and password='$pwdmd5' and confirmcode='y'";
+        $qry = "Select name, email from $this->tablename where username='$username' and password='$pwdmd5'";
+		
+		echo $qry;
+       //$result = $this->connection->query($qry);
+		$result= mysqli_query($this->connection,$qry);
         
-        $result = mysql_query($qry,$this->connection);
         
-        if(!$result || mysql_num_rows($result) <= 0)
+        if(!$result || mysqli_num_rows($result) <= 0)
         {
             echo "Error logging in. The username or password does not match";
             return false;
         }
         
-        $row = mysql_fetch_assoc($result);
-        
-        
-        $_SESSION['name_of_user']  = $row['name'];
+       $row = mysqli_fetch_assoc($result);
+     $_SESSION['name_of_user']  = $row['name'];
         $_SESSION['email_of_user'] = $row['email'];
+
+        
+        
+       
         
         return true;
     }

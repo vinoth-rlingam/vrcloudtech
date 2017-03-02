@@ -1,13 +1,10 @@
 <?php
 require_once("include/membersite_config.php");
 
-if($_SERVER['REQUEST_METHOD'] == "POST")
+if(isset($_POST['Submit']))
 {
-	echo "hi index";
-	echo "username".$_POST['username'];
-	echo "password".$_POST['login-pass'];
-   if($vrcloudtechmembersite->Login()){
-        RedirectToURL("login-home.php");
+	  if($vrcloudtechmembersite->Login()){
+        $vrcloudtechmembersite->RedirectToURL("login-home.php");
    }
 }
 

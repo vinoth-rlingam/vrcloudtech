@@ -1,9 +1,9 @@
 <?PHP
 require_once("include/membersite_config.php");
-echo "hi";
-if(!$vrcloudtechmembersite->Login())
+
+if(!$vrcloudtechmembersite->CheckLogin())
 {
-    //$vrcloudtechmembersite->RedirectToURL("register.php");
+    $vrcloudtechmembersite->RedirectToURL("register.php");
     exit;
 }
 
@@ -18,7 +18,7 @@ if(!$vrcloudtechmembersite->Login())
 <body>
 <div id='fg_membersite_content'>
 <h2>Home Page</h2>
-Welcome back Vinoth!
+Welcome back <?= $vrcloudtechmembersite->UserFullName(); ?>!
 
 <p><a href='change-pwd.php'>Change password</a></p>
 
