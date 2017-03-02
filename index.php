@@ -1,5 +1,23 @@
 <?php
-session_start(); 
+require_once("include/membersite_config.php");
+
+if($_SERVER['REQUEST_METHOD'] == "POST")
+{
+	echo "hi index";
+	echo "username".$_POST['username'];
+	echo "password".$_POST['login-pass'];
+   if($vrcloudtechmembersite->Login()){
+        RedirectToURL("login-home.php");
+   }
+}
+
+ 
+
+	
+	
+	   
+	
+	
 ?>
 <!doctype html>
 <html class="no-js">
@@ -44,7 +62,8 @@ session_start();
 
 
 
-<div class="modal fade" id="login-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal fade" id="login-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" >
+<form name="login" method="post">
 	<div class="modal-dialog">
     	<div class="modal-content">
       		<div class="modal-header login_modal_header">
@@ -58,16 +77,16 @@ session_start();
       			<div id='social-icons-conatainer'>
 	        		<div class='modal-body-left'>
 	        			<div class="form-group">
-		              		<input type="text" id="username" placeholder="Enter your name" value="" class="form-control login-field">
+		              		<input type="text" name ="username" id="username" value='<?php echo $vrcloudtechmembersite->SafeDisplay('username') ?>' placeholder="Enter your name" class="form-control login-field">
 		              		<i class="fa fa-user login-field-icon"></i>
 		            	</div>
 		
 		            	<div class="form-group">
-		            	  	<input type="password" id="login-pass" placeholder="Password" value="" class="form-control login-field">
+		            	  	<input type="password" name ="login-pass" id="login-pass" value='<?php echo $vrcloudtechmembersite->SafeDisplay('login-pass') ?>'placeholder="Password" class="form-control login-field">
 		              		<i class="fa fa-lock login-field-icon"></i>
 		            	</div>
 		
-		            	<a href="#" class="btn btn-success modal-login-btn">Login</a>
+		            	<input type= "submit" class="btn btn-success modal-login-btn" name='Submit' id='Submit' value="Login">
 		            	<a href="#" class="login-link text-center">Lost your password?</a>
 	        		</div>
 	        	
@@ -93,5 +112,8 @@ session_start();
       		</div>
     	</div>
   	</div>
+</form>	
 </div>
+
+
 
