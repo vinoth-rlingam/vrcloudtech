@@ -7,13 +7,6 @@ if(isset($_POST['Submit']))
         $vrcloudtechmembersite->RedirectToURL("login-home.php");
    }
 }
-
- 
-
-	
-	
-	   
-	
 	
 ?>
 <!doctype html>
@@ -23,8 +16,7 @@ if(isset($_POST['Submit']))
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>vrcloudtech</title>
-		<meta name="description" content="Twitter Bootstrap Modal Login Popup with Social login icons, Bootstrap modal popup with login form, Bootstrap modal popup with social login icons ">
-		<meta name="keywords" content="Twitter Bootstrap Modal Login Popup with Social login icons, Bootstrap modal popup with login form, Bootstrap modal popup with social login icons ">
+		
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
 		<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
