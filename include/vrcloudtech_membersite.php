@@ -1,6 +1,6 @@
 <?PHP
 
-
+require_once("class.phpmailer.php");
 class vrclouctechsite
 {
    
@@ -19,6 +19,26 @@ class vrclouctechsite
         $this->sitename = 'vrcloudtech.com';
         $this->rand_key = '0iQx5oBk66oVZep';
     }
+	
+	 function GetSelfScript()
+    {
+        return htmlentities($_SERVER['PHP_SELF']);
+    }  
+	function UserEmail()
+	
+    {
+        return isset($_SESSION['email_of_user'])?$_SESSION['email_of_user']:'';
+    }
+	 
+    function GetErrorMessage()
+    {
+        if(empty($this->error_message))
+        {
+            return '';
+        }
+        $errormsg = nl2br(htmlentities($this->error_message));
+        return $errormsg;
+    } 
     
   function SafeDisplay($value_name)
     {
@@ -54,8 +74,15 @@ class vrclouctechsite
         $this->rand_key = $key;
     }
     
-   
+    function HandleDBError($err)
+    {
+        $this->HandleError($err."\r\n mysqlerror:".mysql_error());
+    }
     
+	 function HandleError($err)
+    {
+        $this->error_message .= $err."\r\n";
+    }
    function GetFromAddress(){
 
         $host = 'vrcloudtech.net';
@@ -261,10 +288,29 @@ function CheckLogin()
          return true;
     }
 	
+	    function DBLogin()
+    {
+
+        $this->connection = mysqli_connect($this->db_host,$this->username,$this->pwd,$this->database);
+
+        if(!$this->connection)
+        {   
+            $this->HandleDBError("Database Login failed! Please make sure that the DB login credentials provided are correct");
+            return false;
+        }
+       
+        return true;
+    } 
+	
 	function CheckLoginInDB($username,$password)
     {
 		echo "inside login db";
-       $this->connection = mysqli_connect($this->db_host,$this->username,$this->pwd,$this->database);      
+		if(!$this->DBLogin())
+        {
+            $this->HandleError("Database login failed!");
+            return false;
+        }   
+       //$this->connection = mysqli_connect($this->db_host,$this->username,$this->pwd,$this->database);      
         $username = $this->SanitizeForSQL($username);
         $pwdmd5 = md5($password);
         $qry = "Select name, email from $this->tablename where username='$username' and password='$pwdmd5'";
@@ -296,6 +342,189 @@ function CheckLogin()
         return isset($_SESSION['name_of_user'])?$_SESSION['name_of_user']:'';
     }	
 	   
-    
+   // Change Password
+
+ function ChangePassword()
+    {
+        if(!$this->CheckLogin())
+        {
+            $this->HandleError("Not logged in!");
+            return false;
+        }
+        
+        if(empty($_POST['oldpwd']))
+        {
+            $this->HandleError("Old password is empty!");
+            return false;
+        }
+        if(empty($_POST['newpwd']))
+        {
+            $this->HandleError("New password is empty!");
+            return false;
+        }
+        
+        $user_rec = array();
+        if(!$this->GetUserFromEmail($this->UserEmail(),$user_rec))
+        {
+            return false;
+        }
+        
+        $pwd = trim($_POST['oldpwd']);
+		
+        
+        if($user_rec['password'] != md5($pwd))
+        {
+            $this->HandleError("The old password does not match!");
+            return false;
+        }
+        $newpwd = trim($_POST['newpwd']);
+        
+        if(!$this->ChangePasswordInDB($user_rec, $newpwd))
+        {
+            return false;
+        }
+        return true;
+    }
+	
+	 function GetUserFromEmail($email,&$user_rec)
+    {
+        if(!$this->DBLogin())
+        {
+            $this->HandleError("Database login failed!");
+            return false;
+        }   
+        $email = $this->SanitizeForSQL($email);
+		
+		$qry ="Select * from $this->tablename where email='$email'";
+        
+        $result = mysqli_query($this->connection,$qry);  
+
+        if(!$result || mysqli_num_rows($result) <= 0)
+        {
+            $this->HandleError("There is no user with email: $email");
+            return false;
+        }
+        $user_rec = mysqli_fetch_assoc($result);
+
+        echo $user_rec['username'];
+        return true;
+    }
+	
+	 function ChangePasswordInDB($user_rec, $newpwd)
+    {
+        $newpwd = $this->SanitizeForSQL($newpwd);
+        
+        $qry = "Update $this->tablename Set `password`='".md5($newpwd)."' Where  username='".$user_rec['username']."'";
+        
+        if(!mysqli_query($this->connection,$qry))
+        {
+            $this->HandleDBError("Error updating the password \nquery:$qry");
+            return false;
+        }     
+        return true;
+    }
+	
+	//Password reset
+	
+	function ResetPassword()
+    {
+        if(empty($_GET['email']))
+        {
+            $this->HandleError("Email is empty!");
+            return false;
+        }
+        if(empty($_GET['code']))
+        {
+            $this->HandleError("reset code is empty!");
+            return false;
+        }
+        $email = trim($_GET['email']);
+        $code = trim($_GET['code']);
+        
+        if($this->GetResetPasswordCode($email) != $code)
+        {
+            $this->HandleError("Bad reset code!");
+            return false;
+        }
+        
+        $user_rec = array();
+        if(!$this->GetUserFromEmail($email,$user_rec))
+        {
+            return false;
+        }
+        
+        $new_password = $this->ResetUserPasswordInDB($user_rec);
+        if(false === $new_password || empty($new_password))
+        {
+            $this->HandleError("Error updating new password");
+            return false;
+        }
+        
+        if(false == $this->SendNewPassword($user_rec,$new_password))
+        {
+            $this->HandleError("Error sending new password");
+            return false;
+        }
+        return true;
+    }
+	
+	 function EmailResetPasswordLink()
+    {
+        if(empty($_POST['email']))
+        {
+            $this->HandleError("Email is empty!");
+            return false;
+        }
+        $user_rec = array();
+        if(false === $this->GetUserFromEmail($_POST['email'], $user_rec))
+        {
+            return false;
+        }
+        if(false === $this->SendResetPasswordLink($user_rec))
+        {
+            return false;
+        }
+        return true;
+    }
+	
+	 function GetResetPasswordCode($email)
+    {
+       return substr(md5($email.$this->sitename.$this->rand_key),0,10);
+    }
+	
+	function SendResetPasswordLink($user_rec)
+    {
+        $email = $user_rec['email'];
+        
+        $mailer = new PHPMailer();
+        
+        $mailer->CharSet = 'utf-8';
+        
+        $mailer->AddAddress($email,$user_rec['name']);
+        
+        $mailer->Subject = "Your reset password request at ".$this->sitename;
+
+        $mailer->From = $this->GetFromAddress();
+        
+        $link = $this->GetAbsoluteURLFolder().
+                '/resetpwd.php?email='.
+                urlencode($email).'&code='.
+                urlencode($this->GetResetPasswordCode($email));
+
+        $mailer->Body ="Hello ".$user_rec['name']."\r\n\r\n".
+        "There was a request to reset your password at ".$this->sitename."\r\n".
+        "Please click the link below to complete the request: \r\n".$link."\r\n".
+        "Regards,\r\n".
+        "Webmaster\r\n".
+        $this->sitename;
+        
+        if(!$mailer->Send())
+			
+        {echo "mail not sent";
+            return false;
+        }
+        return true;
+    }
+       
 }
 ?>

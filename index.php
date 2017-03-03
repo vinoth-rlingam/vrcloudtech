@@ -76,7 +76,7 @@ if(isset($_POST['Submit']))
 		            	</div>
 		
 		            	<input type= "submit" class="btn btn-success modal-login-btn" name='Submit' id='Submit' value="Login">
-		            	<a href="#" class="login-link text-center">Lost your password?</a>
+		            	<a href="reset-pwd-req.php" class="login-link text-center">Lost your password?</a>
 	        		</div>
 	        	
 	        		<div class='modal-body-right'>

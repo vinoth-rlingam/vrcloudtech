@@ -13,18 +13,53 @@ if(!$vrcloudtechmembersite->CheckLogin())
 <head>
       <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
       <title>Home page</title>
-      <link rel="STYLESHEET" type="text/css" href="style/fg_membersite.css">
+     
+	  <style>
+div.container {
+    width: 100%;   
+	background-color: #c6e2ff;
+}
+
+header{
+    padding: 1em;
+    color: white;
+    background-color: #191970;
+    clear: left;
+    text-align: center;
+}
+
+nav {
+    float: left;
+    max-width: 160px;
+    margin: 0;
+    padding: 1em;
+}
+span.changepasswordSpace {
+    padding-left: 100px;
+}
+
+span.controlledSpace {
+    padding-left: 900px;
+}
+
+</style>
 </head>
 <body>
-<div id='fg_membersite_content'>
-<h2>Home Page</h2>
-Welcome back <?= $vrcloudtechmembersite->UserFullName(); ?>!
+<div class="container" id='vrcloudtech_content'style="height: 100%;">
+<header>
+<div align="right" >
+   <h4 align ="right">Hi <?= $vrcloudtechmembersite->UserFullName(); ?></h4>
+   <a href='logout.php'>Logout</a></div>
+   <a href='change-pwd.php'>Change password</a>
+   <span class="changepasswordSpace"/>
+   <a href='access-controlled.php'>A sample 'members-only' page</a>
+   <span class="controlledSpace"/>
+   
+   
+</header>
 
-<p><a href='change-pwd.php'>Change password</a></p>
 
-<p><a href='access-controlled.php'>A sample 'members-only' page</a></p>
-<br><br><br>
-<p><a href='logout.php'>Logout</a></p>
+
 </div>
 </body>
 </html>
