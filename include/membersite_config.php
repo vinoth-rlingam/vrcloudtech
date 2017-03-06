@@ -4,7 +4,7 @@ require_once("include/vrcloudtech_membersite.php");
 $vrcloudtechmembersite = new vrclouctechsite();
 
 //Provide your site name here
-$vrcloudtechmembersite->SetWebsiteName('user11.com');
+$vrcloudtechmembersite->SetWebsiteName('vrcloudtech.net');
 
 //Provide the email address where you want to get notifications
 $vrcloudtechmembersite->SetAdminEmail('user11@user11.com');

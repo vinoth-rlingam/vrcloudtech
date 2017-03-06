@@ -102,25 +102,26 @@ function SendUserConfirmationEmail(&$formvars)
 		$mailer->SMTPDebug = 1; // debugging: 1 = errors and messages, 2 = messages only
 		$mailer->SMTPAuth = true; // authentication enabled
 		$mailer->isSMTP();
-		$mailer->SMTPSecure = 'tls'; // secure transfer enabled REQUIRED for Gmail
-		$mailer->Host = "ssl://54.243.97.84";
-		$mailer->Port = 25; // or 587
+		$mailer->CharSet = 'utf-8';
+		$mailer->SMTPSecure = 'ssl'; // secure transfer enabled REQUIRED for Gmail
+		$mailer->Host = "smtp.gmail.com";
+		$mailer->Port = 465; // or 587
 		$mailer->IsHTML(true);
-		$mailer->Username = "AKIAJN3ANGOQT4W3NT3A";
-		$mailer->Password = "Aj7qf62z65H90nU3nrBmVGsk0SxI3WksMzarJ8byg+Sd";
+		$mailer->Username = "vinoth.rlingam@gmail.com";
+		$mailer->Password = "Welc0me2";
 
-        $mailer->CharSet = 'utf-8';
         
-        $mailer->AddAddress($formvars['email'],$formvars['name']);
+        
+        $mailer->AddAddress($formvars['email']);
         
         $mailer->Subject = "Your registration with ".'www.vrcloudtech.net';
 
-        $mailer->From = GetFromAddress();        
+        $mailer->From = $this->GetFromAddress();        
         
         $confirmcode = $formvars['confirmcode'];
 		
         
-        $confirm_url = GetAbsoluteURLFolder().'/confirmreg.php?code='.$confirmcode;
+        $confirm_url = $this->GetAbsoluteURLFolder().'/confirmreg.php?code='.$confirmcode;
 		echo $confirm_url;
         
         $mailer->Body ="Hello ".$formvars['name']."\r\n\r\n".
@@ -131,7 +132,7 @@ function SendUserConfirmationEmail(&$formvars)
         "Regards,\r\n".
         "Webmaster\r\n".
         "www.vrcloudtech.net";
-		if (!$mailer->Send()){
+		if ($mailer->Send()){
 			echo "mail failed";
 		}
         return true;
@@ -155,7 +156,7 @@ $formvars = array();
 		
     }
 	$this->InsertIntoDB($formvars);
-	//SendUserConfirmationEmail($formvars);
+	$this->SendUserConfirmationEmail($formvars);
 	return true;
 	
 }
@@ -468,6 +469,48 @@ function CheckLogin()
         return true;
     }
 	
+	function SendNewPassword($user_rec, $new_password)
+    {
+        $email = $user_rec['email'];
+        
+        $mailer = new PHPMailer();
+        
+       $mailer->SMTPDebug = 1; // debugging: 1 = errors and messages, 2 = messages only
+		$mailer->SMTPAuth = true; // authentication enabled
+		$mailer->isSMTP();
+		$mailer->CharSet = 'utf-8';
+		$mailer->SMTPSecure = 'ssl'; // secure transfer enabled REQUIRED for Gmail
+		$mailer->Host = "smtp.gmail.com";
+		$mailer->Port = 465; // or 587
+		$mailer->IsHTML(true);
+		$mailer->Username = "vinoth.rlingam@gmail.com";
+		$mailer->Password = "Welc0me2";
+        
+        $mailer->AddAddress($email,$user_rec['name']);
+        
+        $mailer->Subject = "Your new password for ".$this->sitename;
+
+        $mailer->From = $this->GetFromAddress();
+        
+        $mailer->Body ="Hello ".$user_rec['name']."\r\n\r\n".
+        "Your password is reset successfully. ".
+        "Here is your updated login:\r\n".
+        "username:".$user_rec['username']."\r\n".
+        "password:$new_password\r\n".
+        "\r\n".
+        "Login here: ".$this->GetAbsoluteURLFolder()."/login.php\r\n".
+        "\r\n".
+        "Regards,\r\n".
+        "Webmaster\r\n".
+        $this->sitename;
+        
+        if(!$mailer->Send())
+        {
+            return false;
+        }
+        return true;
+    }    
+	
 	 function EmailResetPasswordLink()
     {
         if(empty($_POST['email']))
@@ -497,8 +540,18 @@ function CheckLogin()
         $email = $user_rec['email'];
         
         $mailer = new PHPMailer();
+		$mailer->SMTPDebug = 1; // debugging: 1 = errors and messages, 2 = messages only
+		$mailer->SMTPAuth = true; // authentication enabled
+		$mailer->isSMTP();
+		$mailer->CharSet = 'utf-8';
+		$mailer->SMTPSecure = 'ssl'; // secure transfer enabled REQUIRED for Gmail
+		$mailer->Host = "smtp.gmail.com";
+		$mailer->Port = 465; // or 587
+		$mailer->IsHTML(true);
+		$mailer->Username = "vinoth.rlingam@gmail.com";
+		$mailer->Password = "Welc0me2";
         
-        $mailer->CharSet = 'utf-8';
+   
         
         $mailer->AddAddress($email,$user_rec['name']);
         
@@ -525,6 +578,106 @@ function CheckLogin()
         }
         return true;
     }
+	
+	 function ConfirmUser()
+    {
+        if(empty($_GET['code'])||strlen($_GET['code'])<=10)
+        {
+            $this->HandleError("Please provide the confirm code");
+            return false;
+        }
+        $user_rec = array();
+        if(!$this->UpdateDBRecForConfirmation($user_rec))
+        {
+            return false;
+        }
+        
+        $this->SendUserWelcomeEmail($user_rec);
+        
+        
+        
+        return true;
+    }  
+
+ function UpdateDBRecForConfirmation(&$user_rec)
+    {
+        if(!$this->DBLogin())
+        {
+            $this->HandleError("Database login failed!");
+            return false;
+        }   
+        $confirmcode = $this->SanitizeForSQL($_GET['code']);
+        
+        $result = mysqli_query($this->connection,"Select name, email from $this->tablename where confirmcode='$confirmcode'");   
+        if(!$result || mysqli_num_rows($result) <= 0)
+        {
+            $this->HandleError("Wrong confirm code.");
+            return false;
+        }
+        $row = mysqli_fetch_assoc($result);
+        $user_rec['name'] = $row['name'];
+        $user_rec['email']= $row['email'];
+        
+        $qry = "Update $this->tablename Set confirmcode='y' Where  confirmcode='$confirmcode'";
+        
+        if(!mysqli_query($this->connection, $qry))
+        {
+            $this->HandleDBError("Error inserting data to the table\nquery:$qry");
+            return false;
+        }      
+        return true;
+    }	
+	
+	function SendUserWelcomeEmail(&$user_rec)
+    {
+        $mailer = new PHPMailer();
+		$mailer->SMTPDebug = 1; // debugging: 1 = errors and messages, 2 = messages only
+		$mailer->SMTPAuth = true; // authentication enabled
+		$mailer->isSMTP();
+		$mailer->CharSet = 'utf-8';
+		$mailer->SMTPSecure = 'ssl'; // secure transfer enabled REQUIRED for Gmail
+		$mailer->Host = "smtp.gmail.com";
+		$mailer->Port = 465; // or 587
+		$mailer->IsHTML(true);
+		$mailer->Username = "vinoth.rlingam@gmail.com";
+		$mailer->Password = "Welc0me2";
+                
+        $mailer->AddAddress($user_rec['email'],$user_rec['name']);
+        
+        $mailer->Subject = "Welcome to ".$this->sitename;
+
+        $mailer->From = $this->GetFromAddress();        
+        
+        $mailer->Body ="Hello ".$user_rec['name']."\r\n\r\n".
+        "Welcome! Your registration  with ".$this->sitename." is completed.\r\n".
+        "\r\n".
+        "Regards,\r\n".
+        "Webmaster\r\n".
+        $this->sitename;
+
+        if(!$mailer->Send())
+        {
+            $this->HandleError("Failed sending user welcome email.");
+            return false;
+        }
+        return true;
+    }
+	
+	
+	
+	function ResetUserPasswordInDB($user_rec)
+    {
+        $new_password = substr(md5(uniqid()),0,10);
+        
+        if(false == $this->ChangePasswordInDB($user_rec,$new_password))
+        {
+            return false;
+        }
+        return $new_password;
+    }
+    
+    
+    
        
 }
 ?>

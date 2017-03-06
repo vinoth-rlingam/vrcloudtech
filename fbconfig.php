@@ -16,7 +16,7 @@ use Facebook\HttpClients\FacebookHttpable;
 // init app with app id and secret
 FacebookSession::setDefaultApplication( '191928791290857','c30e7d14799da5023ce3c2518afd7b67' );
 // login helper with redirect_uri
-    $helper = new FacebookRedirectLoginHelper('http://vrcloudtech.net/index.php');
+    $helper = new FacebookRedirectLoginHelper('http://vrcloudtech.net/login-home.php');
 try {
   $session = $helper->getSessionFromRedirect();
 } catch( FacebookRequestException $ex ) {
